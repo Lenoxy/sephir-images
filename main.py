@@ -1,25 +1,23 @@
-import multiprocessing as mp
+import grequests
 
-import requests
-
-
-def get_img(i, j):
-    url = 'https://sephir.ch/ict/upload/foto_le/foto-' + str(i) + '_' + str(j) + '.jpg'
-    response = requests.get(url)
-
-    if response.status_code == 200 and response.headers['content-type'] == 'image/jpeg':
-        with open('images/' + str(i) + '_' + str(j) + '.jpg', 'wb') as f:
-            print('found: ' + str(i) + '_' + str(j) + '.jpg')
-            f.write(response.content)
-            f.close()
-    else:
-        print('nothing found: ' + str(i) + '_' + str(j) + '.jpg')
-
+k_start = 1000
+k_end = 2000
 
 if __name__ == '__main__':
-    pool = mp.Pool(mp.cpu_count())
+    for i in range(5990, 7000):
+        secondary_urls = []
+        for j in range(k_start, k_end):
+            secondary_urls.append((i, j, 'https://sephir.ch/ict/upload/foto_le/foto-' + str(i) + '_' + str(j) + '.jpg'))
 
-    for i in range(6043, 9999):
-        for j in range(4981, 9999):
-            # pool.apply(get_img, args=(i, j))
-            get_img(i, j)
+        rs = (grequests.get(u[2]) for u in secondary_urls)
+        responses = grequests.map(rs)
+
+        for k in range(k_start, k_end):
+            if responses[k-k_start].status_code == 200 and responses[k-k_start].headers['content-type'] == 'image/jpeg':
+                with open('images/' + str(i) + '_' + str(k) + '.jpg', 'wb') as f:
+                    print('found: ' + str(i) + '_' + str(k) + '.jpg')
+                    f.write(responses[k].content)
+                    f.close()
+            else:
+                print('nothing found: ' + str(i) + '_' + str(k) + '.jpg')
+
